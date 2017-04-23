@@ -1,7 +1,7 @@
 # EXANTE - Go Client
 [EXANTE](https://exante.eu/) Market Data API Client for Go
 
-[![License MIT](https://img.shields.io/badge/License-MIT-blue.svg)](http://opensource.org/licenses/MIT)
+[![License MIT](https://img.shields.io/badge/License-MIT-blue.svg)](http://opensource.org/licenses/MIT) [![Build Status](https://travis-ci.org/zerodivisi0n/exante-api-go.svg?branch=master)](http://travis-ci.org/zerodivisi0n/exante-api-go)
 
 ## Installation
 ```bash
