@@ -144,6 +144,99 @@ func TestSymbols(t *testing.T) {
 	assert.Equal(t, 2250.0, symbols[4].OptionData.StrikePrice)
 }
 
+func TestSymbol(t *testing.T) {
+	defer gock.Off()
+
+	gock.New(baseUrl).
+		Get("/symbols/AAPL.NASDAQ").
+		Reply(200).
+		BodyString(`{
+			"id": "AAPL.NASDAQ",
+			"name": "Apple",
+			"ticker": "AAPL",
+			"type": "STOCK",
+			"description": "Apple",
+			"exchange": "NASDAQ",
+			"country": "US",
+			"currency": "USD",
+			"i18n": {},
+			"mpi": 0.01
+	}`)
+
+	symbol, err := NewClient("", "", "").Symbol("AAPL.NASDAQ")
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	assert.Equal(t, "AAPL.NASDAQ", symbol.ID)
+	assert.Equal(t, "Apple", symbol.Name)
+	assert.Equal(t, "AAPL", symbol.Ticker)
+	assert.Equal(t, "STOCK", symbol.Type)
+	assert.Equal(t, "Apple", symbol.Description)
+	assert.Equal(t, "NASDAQ", symbol.Exchange)
+	assert.Equal(t, "US", symbol.Country)
+	assert.Equal(t, "USD", symbol.Currency)
+	assert.Equal(t, 0.01, symbol.MPI)
+}
+
+func TestSymbolSpecification(t *testing.T) {
+	defer gock.Off()
+
+	gock.New(baseUrl).
+		Get("/symbols/AAPL.NASDAQ/specification").
+		Reply(200).
+		BodyString(`{
+			"leverage": 0.2,
+			"lotSize": 1.0,
+			"contractMultiplier": 1.0,
+			"priceUnit": 1.0,
+			"units": "Shares"
+	}`)
+
+	spec, err := NewClient("", "", "").SymbolSpecification("AAPL.NASDAQ")
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	assert.Equal(t, 0.2, spec.Leverage)
+	assert.Equal(t, 1.0, spec.LotSize)
+	assert.Equal(t, 1.0, spec.ContractMultiplier)
+	assert.Equal(t, 1.0, spec.PriceUnit)
+	assert.Equal(t, "Shares", spec.Units)
+}
+
+func TestSymbolSchedule(t *testing.T) {
+	defer gock.Off()
+
+	gock.New(baseUrl).
+		Get("/symbols/AAPL.NASDAQ/schedule").
+		Reply(200).
+		BodyString(`{"intervals":[
+			{"name":"PreMarket","period":{"start":1493020800000,"end":1493040600000}},
+			{"name":"MainSession","period":{"start":1493040600000,"end":1493064000000}},
+			{"name":"AfterMarket","period":{"start":1493064000000,"end":1493078400000}}
+	]}`)
+
+	schedule, err := NewClient("", "", "").SymbolSchedule("AAPL.NASDAQ")
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	assert.Equal(t, 3, len(schedule), "Invalid schedule length")
+	assert.Equal(t, "PreMarket", schedule[0].Name)
+	assert.Equal(t, Timestamp{time.Unix(1493020800, 0)}, schedule[0].Period.Start)
+	assert.Equal(t, Timestamp{time.Unix(1493040600, 0)}, schedule[0].Period.End)
+	assert.Equal(t, "MainSession", schedule[1].Name)
+	assert.Equal(t, Timestamp{time.Unix(1493040600, 0)}, schedule[1].Period.Start)
+	assert.Equal(t, Timestamp{time.Unix(1493064000, 0)}, schedule[1].Period.End)
+	assert.Equal(t, "AfterMarket", schedule[2].Name)
+	assert.Equal(t, Timestamp{time.Unix(1493064000, 0)}, schedule[2].Period.Start)
+	assert.Equal(t, Timestamp{time.Unix(1493078400, 0)}, schedule[2].Period.End)
+}
+
 func TestExchanges(t *testing.T) {
 	defer gock.Off()
 
@@ -172,4 +265,88 @@ func TestExchanges(t *testing.T) {
 	assert.Equal(t, "NYSE", exchanges[2].ID)
 	assert.Equal(t, "NYSE: New York Stock Exchange", exchanges[2].Name)
 	assert.Equal(t, "US", exchanges[2].Country)
+}
+
+func TestExchangeSymbols(t *testing.T) {
+	defer gock.Off()
+
+	gock.New(baseUrl).
+		Get("/exchanges/NYSE").
+		Reply(200).
+		BodyString(`[
+		{
+			"id": "LEN.B.NYSE",
+			"ticker": "LEN.B",
+			"name": "Lennar Corporation",
+			"description": "Lennar Corporation",
+			"exchange": "NYSE",
+			"country": "US",
+			"i18n": {},
+			"type": "STOCK",
+			"mpi": 0.01,
+			"currency": "USD"
+		},
+		{
+			"id": "BK.NYSE",
+			"ticker": "BK",
+			"name": "Bank Of New York Mellon Corporation",
+			"description": "Bank Of New York Mellon Corporation",
+			"exchange": "NYSE",
+			"country": "US",
+			"i18n": {},
+			"type": "STOCK",
+			"mpi": 0.01,
+			"currency": "USD"
+		},
+		{
+			"id": "GJR.NYSE",
+			"ticker": "GJR",
+			"name": "Synthetic Fixed-Income Securities",
+			"description": "Synthetic Fixed-Income Securities",
+			"exchange": "NYSE",
+			"country": "US",
+			"i18n": {},
+			"type": "STOCK",
+			"mpi": 0.01,
+			"currency": "USD"
+		}
+	]`)
+
+	symbols, err := NewClient("", "", "").ExchangeSymbols("NYSE")
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	assert.Equal(t, 3, len(symbols), "Invalid symbols length")
+	// LEN.B.NYSE
+	assert.Equal(t, "LEN.B.NYSE", symbols[0].ID)
+	assert.Equal(t, "Lennar Corporation", symbols[0].Name)
+	assert.Equal(t, "LEN.B", symbols[0].Ticker)
+	assert.Equal(t, "STOCK", symbols[0].Type)
+	assert.Equal(t, "Lennar Corporation", symbols[0].Description)
+	assert.Equal(t, "NYSE", symbols[0].Exchange)
+	assert.Equal(t, "US", symbols[0].Country)
+	assert.Equal(t, "USD", symbols[0].Currency)
+	assert.Equal(t, 0.01, symbols[0].MPI)
+	// BK.NYSE
+	assert.Equal(t, "BK.NYSE", symbols[1].ID)
+	assert.Equal(t, "Bank Of New York Mellon Corporation", symbols[1].Name)
+	assert.Equal(t, "BK", symbols[1].Ticker)
+	assert.Equal(t, "STOCK", symbols[1].Type)
+	assert.Equal(t, "Bank Of New York Mellon Corporation", symbols[1].Description)
+	assert.Equal(t, "NYSE", symbols[1].Exchange)
+	assert.Equal(t, "US", symbols[1].Country)
+	assert.Equal(t, "USD", symbols[1].Currency)
+	assert.Equal(t, 0.01, symbols[1].MPI)
+	// GJR.NYSE
+	assert.Equal(t, "GJR.NYSE", symbols[2].ID)
+	assert.Equal(t, "Synthetic Fixed-Income Securities", symbols[2].Name)
+	assert.Equal(t, "GJR", symbols[2].Ticker)
+	assert.Equal(t, "STOCK", symbols[2].Type)
+	assert.Equal(t, "Synthetic Fixed-Income Securities", symbols[2].Description)
+	assert.Equal(t, "NYSE", symbols[2].Exchange)
+	assert.Equal(t, "US", symbols[2].Country)
+	assert.Equal(t, "USD", symbols[2].Currency)
+	assert.Equal(t, 0.01, symbols[2].MPI)
 }

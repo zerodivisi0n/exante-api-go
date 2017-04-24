@@ -48,6 +48,22 @@ type Symbol struct {
 	}
 }
 
+type SymbolSpecification struct {
+	Leverage           float64
+	LotSize            float64
+	ContractMultiplier float64
+	PriceUnit          float64
+	Units              string
+}
+
+type SymbolScheduleInterval struct {
+	Name   string
+	Period struct {
+		Start Timestamp
+		End   Timestamp
+	}
+}
+
 type Exchange struct {
 	ID      string
 	Name    string
@@ -81,12 +97,36 @@ func (c *Client) Symbol(id string) (*Symbol, error) {
 	return &symbol, nil
 }
 
+func (c *Client) SymbolSpecification(id string) (*SymbolSpecification, error) {
+	var spec SymbolSpecification
+	if err := c.apiCall("/symbols/"+id+"/specification", "symbols", nil, &spec); err != nil {
+		return nil, err
+	}
+	return &spec, nil
+}
+
+func (c *Client) SymbolSchedule(id string) ([]SymbolScheduleInterval, error) {
+	var schedule struct{ Intervals []SymbolScheduleInterval }
+	if err := c.apiCall("/symbols/"+id+"/schedule", "symbols", nil, &schedule); err != nil {
+		return nil, err
+	}
+	return schedule.Intervals, nil
+}
+
 func (c *Client) Exchanges() ([]Exchange, error) {
 	var exchanges []Exchange
 	if err := c.apiCall("/exchanges", "symbols", nil, &exchanges); err != nil {
 		return nil, err
 	}
 	return exchanges, nil
+}
+
+func (c *Client) ExchangeSymbols(id string) ([]Symbol, error) {
+	var symbols []Symbol
+	if err := c.apiCall("/exchanges/"+id, "symbols", nil, &symbols); err != nil {
+		return nil, err
+	}
+	return symbols, nil
 }
 
 func (c *Client) apiCall(endpoint string, scope string, params map[string]string, result interface{}) error {
