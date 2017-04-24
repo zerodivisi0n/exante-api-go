@@ -350,3 +350,116 @@ func TestExchangeSymbols(t *testing.T) {
 	assert.Equal(t, "USD", symbols[2].Currency)
 	assert.Equal(t, 0.01, symbols[2].MPI)
 }
+
+func TestTypes(t *testing.T) {
+	defer gock.Off()
+
+	gock.New(baseUrl).
+		Get("/types").
+		Reply(200).
+		BodyString(`[
+			{"id": "CALENDAR_SPREAD"},
+			{"id": "FUND"},
+			{"id": "FX_SPOT"},
+			{"id": "CURRENCY"},
+			{"id": "BOND"},
+			{"id": "FUTURE"},
+			{"id": "STOCK"},
+			{"id": "OPTION"}
+	]`)
+
+	types, err := NewClient("", "", "").Types()
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	assert.Equal(t, 8, len(types), "Invalid types length")
+	assert.Equal(t,
+		[]string{"CALENDAR_SPREAD", "FUND", "FX_SPOT", "CURRENCY",
+			"BOND", "FUTURE", "STOCK", "OPTION"}, types)
+}
+
+func TestTypeSymbols(t *testing.T) {
+	defer gock.Off()
+
+	gock.New(baseUrl).
+		Get("/types/STOCK").
+		Reply(200).
+		BodyString(`[
+			{
+				"id":"MAXD.OTCMKTS",
+				"ticker":"MAXD",
+				"name":"Max Sound",
+				"description":"Max Sound",
+				"exchange":"OTCMKTS",
+				"country":"US",
+				"i18n":{},
+				"type":"STOCK",
+				"mpi":1.0E-4,
+				"currency":"USD"
+			},
+			{
+				"id":"QINC.NASDAQ",
+				"ticker":"QINC",
+				"name":"First Trust RBA Quality Income ETF",
+				"description":"First Trust RBA Quality Income ETF",
+				"exchange":"NASDAQ",
+				"country":"US",
+				"i18n":{},
+				"type":"STOCK",
+				"mpi":0.01,
+				"currency":"USD"
+			},
+			{
+				"id":"DGRE.NASDAQ",
+				"ticker":"DGRE",
+				"name":"WisdomTree Emerging Markets Quality Dividend Growth Fund",
+				"description":"WisdomTree Emerging Markets Quality Dividend Growth Fund",
+				"exchange":"NASDAQ",
+				"country":"US",
+				"i18n":{},
+				"type":"STOCK",
+				"mpi":0.01,
+				"currency":"USD"
+			}
+	]`)
+
+	symbols, err := NewClient("", "", "").TypeSymbols("STOCK")
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	assert.Equal(t, 3, len(symbols), "Invalid types length")
+	// MAXD.OTCMKTS
+	assert.Equal(t, "MAXD.OTCMKTS", symbols[0].ID)
+	assert.Equal(t, "Max Sound", symbols[0].Name)
+	assert.Equal(t, "MAXD", symbols[0].Ticker)
+	assert.Equal(t, "STOCK", symbols[0].Type)
+	assert.Equal(t, "Max Sound", symbols[0].Description)
+	assert.Equal(t, "OTCMKTS", symbols[0].Exchange)
+	assert.Equal(t, "US", symbols[0].Country)
+	assert.Equal(t, "USD", symbols[0].Currency)
+	assert.Equal(t, 1.0E-4, symbols[0].MPI)
+	// QINC.NASDAQ
+	assert.Equal(t, "QINC.NASDAQ", symbols[1].ID)
+	assert.Equal(t, "First Trust RBA Quality Income ETF", symbols[1].Name)
+	assert.Equal(t, "QINC", symbols[1].Ticker)
+	assert.Equal(t, "STOCK", symbols[1].Type)
+	assert.Equal(t, "First Trust RBA Quality Income ETF", symbols[1].Description)
+	assert.Equal(t, "NASDAQ", symbols[1].Exchange)
+	assert.Equal(t, "US", symbols[1].Country)
+	assert.Equal(t, "USD", symbols[1].Currency)
+	assert.Equal(t, 0.01, symbols[1].MPI)
+	// DGRE.NASDAQ
+	assert.Equal(t, "DGRE.NASDAQ", symbols[2].ID)
+	assert.Equal(t, "WisdomTree Emerging Markets Quality Dividend Growth Fund", symbols[2].Name)
+	assert.Equal(t, "DGRE", symbols[2].Ticker)
+	assert.Equal(t, "STOCK", symbols[2].Type)
+	assert.Equal(t, "WisdomTree Emerging Markets Quality Dividend Growth Fund", symbols[2].Description)
+	assert.Equal(t, "NASDAQ", symbols[2].Exchange)
+	assert.Equal(t, "US", symbols[2].Country)
+	assert.Equal(t, "USD", symbols[2].Currency)
+	assert.Equal(t, 0.01, symbols[2].MPI)
+}

@@ -129,6 +129,26 @@ func (c *Client) ExchangeSymbols(id string) ([]Symbol, error) {
 	return symbols, nil
 }
 
+func (c *Client) Types() ([]string, error) {
+	var res []struct{ ID string }
+	if err := c.apiCall("/types", "symbols", nil, &res); err != nil {
+		return nil, err
+	}
+	types := make([]string, len(res))
+	for i, v := range res {
+		types[i] = v.ID
+	}
+	return types, nil
+}
+
+func (c *Client) TypeSymbols(id string) ([]Symbol, error) {
+	var symbols []Symbol
+	if err := c.apiCall("/types/"+id, "symbols", nil, &symbols); err != nil {
+		return nil, err
+	}
+	return symbols, nil
+}
+
 func (c *Client) apiCall(endpoint string, scope string, params map[string]string, result interface{}) error {
 	req, err := http.NewRequest("GET", baseUrl+endpoint, nil)
 	if err != nil {
