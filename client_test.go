@@ -463,3 +463,129 @@ func TestTypeSymbols(t *testing.T) {
 	assert.Equal(t, "USD", symbols[2].Currency)
 	assert.Equal(t, 0.01, symbols[2].MPI)
 }
+
+func TestGroups(t *testing.T) {
+	defer gock.Off()
+
+	gock.New(baseUrl).
+		Get("/groups").
+		Reply(200).
+		BodyString(`[
+		{"group":"ABX","name":"Barrick Gold","types":["OPTION"],"exchange":"CBOE"},
+		{"group":"MA","name":"Mastercard","types":["OPTION"],"exchange":"CBOE"},
+		{"group":"ATLN","name":"Actelion","types":["OPTION"],"exchange":"EUREX"}
+	]`)
+
+	groups, err := NewClient("", "", "").Groups()
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	assert.Equal(t, 3, len(groups), "Invalid groups length")
+	// ABX
+	assert.Equal(t, "ABX", groups[0].Group)
+	assert.Equal(t, "Barrick Gold", groups[0].Name)
+	assert.Equal(t, []string{"OPTION"}, groups[0].Types)
+	assert.Equal(t, "CBOE", groups[0].Exchange)
+	// MA
+	assert.Equal(t, "MA", groups[1].Group)
+	assert.Equal(t, "Mastercard", groups[1].Name)
+	assert.Equal(t, []string{"OPTION"}, groups[1].Types)
+	assert.Equal(t, "CBOE", groups[1].Exchange)
+	// ATLN
+	assert.Equal(t, "ATLN", groups[2].Group)
+	assert.Equal(t, "Actelion", groups[2].Name)
+	assert.Equal(t, []string{"OPTION"}, groups[2].Types)
+	assert.Equal(t, "EUREX", groups[2].Exchange)
+}
+
+func TestGroupSymbols(t *testing.T) {
+	defer gock.Off()
+
+	gock.New(baseUrl).
+		Get("/groups/MA").
+		Reply(200).
+		BodyString(`[
+			{
+				"id":"MA.CBOE.15U2017.P140",
+				"ticker":"MA",
+				"name":"Mastercard",
+				"description":"Mastercard 15 Sep 2017 PUT 140",
+				"exchange":"CBOE",
+				"country":"US",
+				"i18n":{},
+				"type":"OPTION",
+				"mpi":0.01,
+				"currency":"USD",
+				"group":"MA",
+				"expiration":1505487600000,
+				"optionData":{
+					"right":"PUT",
+					"strikePrice":140
+				}
+			}
+	]`)
+
+	symbols, err := NewClient("", "", "").GroupSymbols("MA")
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	assert.Equal(t, 1, len(symbols), "Invalid symbols length")
+	// MA
+	assert.Equal(t, "MA.CBOE.15U2017.P140", symbols[0].ID)
+	assert.Equal(t, "Mastercard", symbols[0].Name)
+	assert.Equal(t, "MA", symbols[0].Ticker)
+	assert.Equal(t, "OPTION", symbols[0].Type)
+	assert.Equal(t, "Mastercard 15 Sep 2017 PUT 140", symbols[0].Description)
+	assert.Equal(t, "CBOE", symbols[0].Exchange)
+	assert.Equal(t, "US", symbols[0].Country)
+	assert.Equal(t, "USD", symbols[0].Currency)
+	assert.Equal(t, 0.01, symbols[0].MPI)
+	assert.Equal(t, "MA", symbols[0].Group)
+	assert.Equal(t, Timestamp{time.Unix(1505487600, 0)}, symbols[0].Expiration)
+	assert.Equal(t, "PUT", symbols[0].OptionData.Right)
+	assert.Equal(t, 140.0, symbols[0].OptionData.StrikePrice)
+}
+
+func TestGroupNearestSymbol(t *testing.T) {
+	defer gock.Off()
+
+	gock.New(baseUrl).
+		Get("/groups/6R/nearest").
+		Reply(200).
+		BodyString(`{
+			"id":"6R.CME.K2017",
+			"ticker":"6R",
+			"name":"RUB/USD",
+			"description":"Futures On RUB/USD May 2017",
+			"exchange":"CME",
+			"country":"US",
+			"i18n":{},
+			"type":"FUTURE",
+			"mpi":5.0E-6,
+			"currency":"USD",
+			"group":"6R",
+			"expiration":1494813600000
+	}`)
+
+	symbol, err := NewClient("", "", "").GroupNearestSymbol("6R")
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	assert.Equal(t, "6R.CME.K2017", symbol.ID)
+	assert.Equal(t, "RUB/USD", symbol.Name)
+	assert.Equal(t, "6R", symbol.Ticker)
+	assert.Equal(t, "FUTURE", symbol.Type)
+	assert.Equal(t, "Futures On RUB/USD May 2017", symbol.Description)
+	assert.Equal(t, "CME", symbol.Exchange)
+	assert.Equal(t, "US", symbol.Country)
+	assert.Equal(t, "USD", symbol.Currency)
+	assert.Equal(t, 5e-6, symbol.MPI)
+	assert.Equal(t, "6R", symbol.Group)
+	assert.Equal(t, Timestamp{time.Unix(1494813600, 0)}, symbol.Expiration)
+}

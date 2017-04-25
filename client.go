@@ -70,6 +70,13 @@ type Exchange struct {
 	Country string
 }
 
+type Group struct {
+	Group    string
+	Name     string
+	Types    []string
+	Exchange string
+}
+
 func NewClient(clientID, applicationID, sharedKey string) *Client {
 	return &Client{
 		conn: &http.Client{
@@ -147,6 +154,30 @@ func (c *Client) TypeSymbols(id string) ([]Symbol, error) {
 		return nil, err
 	}
 	return symbols, nil
+}
+
+func (c *Client) Groups() ([]Group, error) {
+	var groups []Group
+	if err := c.apiCall("/groups", "symbols", nil, &groups); err != nil {
+		return nil, err
+	}
+	return groups, nil
+}
+
+func (c *Client) GroupSymbols(id string) ([]Symbol, error) {
+	var symbols []Symbol
+	if err := c.apiCall("/groups/"+id, "symbols", nil, &symbols); err != nil {
+		return nil, err
+	}
+	return symbols, nil
+}
+
+func (c *Client) GroupNearestSymbol(id string) (*Symbol, error) {
+	var symbol Symbol
+	if err := c.apiCall("/groups/"+id+"/nearest", "symbols", nil, &symbol); err != nil {
+		return nil, err
+	}
+	return &symbol, nil
 }
 
 func (c *Client) apiCall(endpoint string, scope string, params map[string]string, result interface{}) error {
