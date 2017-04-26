@@ -16,6 +16,18 @@ const (
 	tokenTTL = 10 * time.Second
 )
 
+type Duration int
+
+const (
+	Duration1Minute   Duration = 60
+	Duration5Minutes           = 300
+	Duration10Minutes          = 600
+	Duration15Minutes          = 900
+	Duration1Hour              = 3600
+	Duration6Hours             = 21600
+	Duration1Day               = 86400
+)
+
 type Client struct {
 	conn *http.Client
 
@@ -75,6 +87,14 @@ type Group struct {
 	Name     string
 	Types    []string
 	Exchange string
+}
+
+type OHLC struct {
+	Timestamp Timestamp
+	Open      float64
+	High      float64
+	Low       float64
+	Close     float64
 }
 
 func NewClient(clientID, applicationID, sharedKey string) *Client {
@@ -178,6 +198,20 @@ func (c *Client) GroupNearestSymbol(id string) (*Symbol, error) {
 		return nil, err
 	}
 	return &symbol, nil
+}
+
+func (c *Client) OHLC(symbolId string, duration Duration, from time.Time, to time.Time, size int) ([]OHLC, error) {
+	var candles []OHLC
+	durationStr := strconv.Itoa(int(duration))
+	params := map[string]string{
+		"from": strconv.FormatInt(from.Unix()*1000, 10),
+		"to":   strconv.FormatInt(to.Unix()*1000, 10),
+		"size": strconv.Itoa(size),
+	}
+	if err := c.apiCall("/ohlc/"+symbolId+"/"+durationStr, "ohlc", params, &candles); err != nil {
+		return nil, err
+	}
+	return candles, nil
 }
 
 func (c *Client) apiCall(endpoint string, scope string, params map[string]string, result interface{}) error {
