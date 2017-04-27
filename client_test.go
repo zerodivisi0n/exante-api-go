@@ -594,56 +594,71 @@ func TestOHLC(t *testing.T) {
 	defer gock.Off()
 
 	gock.New(baseUrl).
-		Get("/ohlc/AAPL/60").
+		Get("/ohlc/AAPL.NASDAQ/86400").
 		Reply(200).
 		BodyString(`[
-		{
-			"timestamp": 1481572800000,
-			"open": 112.975,
-			"high": 113.105,
-			"low": 112.935,
-			"close": 112.965
-		},
-		{
-			"timestamp": 1481569200000,
-			"open": 112.885,
-			"high": 112.935,
-			"low": 112.725,
-			"close": 112.935
-		},
-		{
-			"timestamp": 1481565600000,
-			"open": 112.915,
-			"high": 113.135,
-			"low": 112.855,
-			"close": 112.935
-		}
+			{
+				"timestamp":1493251200000,
+				"open":143.625,
+				"high":144.15,
+				"low":143.315,
+				"close":143.635
+			},
+			{
+				"timestamp":1493164800000,
+				"open":144.66,
+				"high":144.875,
+				"low":143.375,
+				"close":143.825
+			},
+			{
+				"timestamp":1493078400000,
+				"open":143.915,
+				"high":144.895,
+				"low":143.685,
+				"close":144.435
+			},
+			{
+				"timestamp":1492992000000,
+				"open":144.105,
+				"high":144.15,
+				"low":143.21,
+				"close":143.75
+			}
 	]`)
 
+	from, _ := time.Parse(time.RFC3339, "2017-04-24T00:00:00Z")
+	to, _ := time.Parse(time.RFC3339, "2017-04-27T00:00:00Z")
 	candles, err := NewClient("", "", "").OHLC(
-		"AAPL", Duration1Minute, time.Now(), time.Now(), 60)
+		"AAPL.NASDAQ", Duration1Day, from, to, 4)
 
 	if err != nil {
 		t.Error(err)
 	}
 
-	assert.Equal(t, 3, len(candles), "Invalid candles length")
+	assert.Equal(t, 4, len(candles), "Invalid candles length")
 	// 1
-	assert.Equal(t, Timestamp{time.Unix(1481572800, 0)}, candles[0].Timestamp)
-	assert.Equal(t, 112.975, candles[0].Open)
-	assert.Equal(t, 113.105, candles[0].High)
-	assert.Equal(t, 112.935, candles[0].Low)
-	assert.Equal(t, 112.965, candles[0].Close)
+	assert.Equal(t, Timestamp{time.Unix(1493251200, 0)}, candles[0].Timestamp)
+	assert.Equal(t, 143.625, candles[0].Open)
+	assert.Equal(t, 144.15, candles[0].High)
+	assert.Equal(t, 143.315, candles[0].Low)
+	assert.Equal(t, 143.635, candles[0].Close)
 	// 2
-	assert.Equal(t, Timestamp{time.Unix(1481569200, 0)}, candles[1].Timestamp)
-	assert.Equal(t, 112.885, candles[1].Open)
-	assert.Equal(t, 112.935, candles[1].High)
-	assert.Equal(t, 112.725, candles[1].Low)
-	assert.Equal(t, 112.935, candles[1].Close)
+	assert.Equal(t, Timestamp{time.Unix(1493164800, 0)}, candles[1].Timestamp)
+	assert.Equal(t, 144.66, candles[1].Open)
+	assert.Equal(t, 144.875, candles[1].High)
+	assert.Equal(t, 143.375, candles[1].Low)
+	assert.Equal(t, 143.825, candles[1].Close)
 	// 3
-	assert.Equal(t, Timestamp{time.Unix(1481565600, 0)}, candles[2].Timestamp)
-	assert.Equal(t, 112.915, candles[2].Open)
-	assert.Equal(t, 113.135, candles[2].High)
-	assert.Equal(t, 112.855, candles[2].Low)
-	assert.Equal(t, 112.935, candles[2].Close)
+	assert.Equal(t, Timestamp{time.Unix(1493078400, 0)}, candles[2].Timestamp)
+	assert.Equal(t, 143.915, candles[2].Open)
+	assert.Equal(t, 144.895, candles[2].High)
+	assert.Equal(t, 143.685, candles[2].Low)
+	assert.Equal(t, 144.435, candles[2].Close)
+	// 4
+	assert.Equal(t, Timestamp{time.Unix(1492992000, 0)}, candles[3].Timestamp)
+	assert.Equal(t, 144.105, candles[3].Open)
+	assert.Equal(t, 144.15, candles[3].High)
+	assert.Equal(t, 143.21, candles[3].Low)
+	assert.Equal(t, 143.75, candles[3].Close)
 }
